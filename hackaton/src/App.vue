@@ -5,6 +5,7 @@
       <!-- Afficher chaque élément avec le champ 'Name' -->
       <li v-for="(item, index) in data" :key="index">
         {{ item.Name }} <!-- Affichage du champ 'Name' -->
+        <button @click="updateItem(item.id)">Update</button> <!-- Update button -->
         <button @click="deleteItem(item.id)">Delete</button> <!-- Delete button -->
       </li>
     </ul>
@@ -63,12 +64,39 @@ export default {
         console.error('Erreur lors de la création de l\'élément :', error);
       }
     },
+
+    // Fonction pour supprimer un élément
     async deleteItem(id) {
       try {
         await axios.delete(`http://localhost:3000/delete/${id}`);
         this.fetchData(); // Recharge les données après suppression
       } catch (error) {
         console.error('Erreur lors de la suppression de l\'élément :', error);
+      }
+    },
+
+    // Fonction pour mettre à jour un élément
+    async updateItem(id) {
+      if (!this.newItemName) {
+        alert("Veuillez entrer un nom avant de soumettre.");
+        return;
+      }
+
+      try {
+        const updatedItem = {
+          Name: this.newItemName, // Utilise la valeur de l'input
+        };
+
+        // Utiliser PUT pour mettre à jour un élément existant
+        await axios.put(`http://localhost:3000/update/${id}`, updatedItem);
+
+        // Recharger les données après mise à jour
+        this.fetchData();
+
+        // Réinitialiser le champ de l'input
+        this.newItemName = "";
+      } catch (error) {
+        console.error('Erreur lors de la mise à jour de l\'élément :', error);
       }
     },
   },
