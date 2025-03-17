@@ -9,6 +9,9 @@ const port = 3000;
 // Utiliser CORS pour autoriser les appels depuis votre frontend Vue.js
 app.use(cors());
 
+// Parse les requêtes JSON
+app.use(express.json());
+
 // Initialiser Firebase Admin avec les identifiants
 var serviceAccount = require('./keys/serviceAccountKey.json'); // Mettez à jour le chemin vers votre fichier de clé
 admin.initializeApp({
@@ -19,46 +22,54 @@ admin.initializeApp({
 // Accéder à Firestore
 const db = admin.firestore();
 
-// Route pour récupérer toutes les collections Firestore
-app.get('/collections', async (req, res) => {
-  console.log('Route /collections appelée'); // Cette ligne vous aide à voir si la route est bien appelée
-  try {
-    // Récupérer toutes les collections
-    const collections = await db.listCollections();
-
-    // Créer un tableau pour stocker le nom de toutes les collections
-    const collectionNames = collections.map(collection => collection.id);
-
-    // Retourner les noms des collections sous forme de JSON
-    res.status(200).json({ collections: collectionNames });
-  } catch (error) {
-    console.error('Erreur lors de la récupération des collections :', error);
-    res.status(500).send('Erreur serveur');
-  }
-});
-
 // Route pour récupérer tous les éléments de la collection "test"
 app.get('/test', async (req, res) => {
-  console.log('Route /test appelée'); // Cette ligne vous aide à voir si la route est bien appelée
   try {
     // Récupérer tous les documents de la collection "test"
     const snapshot = await db.collection('test').get();
 
-    // Vérifier si la collection est vide
     if (snapshot.empty) {
       return res.status(404).send('Aucun document trouvé dans la collection "test"');
     }
 
-    // Créer un tableau pour stocker les documents
     const documents = snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
     }));
 
-    // Retourner les documents sous forme de JSON
     res.status(200).json({ documents: documents });
   } catch (error) {
     console.error('Erreur lors de la récupération des documents de la collection "test":', error);
+    res.status(500).send('Erreur serveur');
+  }
+});
+
+// Route pour créer un nouvel élément dans la collection "test"
+app.post('/create', async (req, res) => {
+  const newItem = req.body;
+
+  try {
+    // Ajouter un nouvel élément dans la collection "test"
+    await db.collection('test').add(newItem);
+    
+    res.status(201).send('Nouvel élément créé avec succès');
+  } catch (error) {
+    console.error('Erreur lors de la création de l\'élément :', error);
+    res.status(500).send('Erreur serveur');
+  }
+});
+
+// Route pour supprimer un élément de la collection "test"
+app.delete('/delete/:id', async (req, res) => {
+  const { id } = req.params; // L'ID du document à supprimer
+
+  try {
+    // Supprimer le document spécifié par l'ID
+    await db.collection('test').doc(id).delete();
+    
+    res.status(200).send('Élément supprimé avec succès');
+  } catch (error) {
+    console.error('Erreur lors de la suppression de l\'élément :', error);
     res.status(500).send('Erreur serveur');
   }
 });
