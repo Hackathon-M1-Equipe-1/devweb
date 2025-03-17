@@ -1,80 +1,122 @@
 <template>
-  <div id="app">
-    <h1>Données depuis Firebase :</h1>
-    <ul>
-      <!-- Afficher chaque élément avec le champ 'Name' -->
-      <li v-for="(item, index) in data" :key="index">
-        {{ item.Name }} <!-- Affichage du champ 'Name' -->
-        <button @click="deleteItem(item.id)">Delete</button> <!-- Delete button -->
-      </li>
-    </ul>
+  <div class="dashboard">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="logo">🏠 Smart Dashboard</div>
+      <ul class="nav-links">
+        <li>🏠 Home</li>
+        <li>📊 Analytics</li>
+        <li>⚙️ Settings</li>
+        <li>👤 Profile</li>
+      </ul>
+    </aside>
 
-    <!-- Input pour récupérer la valeur du nom -->
-    <input type="text" name="name" id="nameField" v-model="newItemName" placeholder="Entrez un nom">
-    <button @click="createNewItem">Click me to create a new item</button>
+    <div class="main-content">
+      <!-- Header -->
+      <header class="header">
+        <h1>Dashboard Overview</h1>
+        <button class="add-item">+ Add Item</button>
+      </header>
+
+      <!-- Widget Container -->
+      <div class="widgets">
+        <div class="widget" v-for="n in 4" :key="n">
+          <h3>Widget {{ n }}</h3>
+          <p>Content goes here</p>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
-<script>
-import axios from 'axios';
-
-export default {
-  data() {
-    return {
-      data: [], // Contiendra les données récupérées de Firebase
-      newItemName: "", // Contiendra la valeur de l'input
-    };
-  },
-  mounted() {
-    this.fetchData(); // Appel de la fonction fetchData au montage du composant
-  },
-  methods: {
-    // Fonction pour récupérer les données depuis l'API Node.js
-    async fetchData() {
-      try {
-        const response = await axios.get('http://localhost:3000/test'); // Faire une requête GET vers le serveur Node.js
-        this.data = response.data.documents; // Stocker les documents dans 'data'
-      } catch (error) {
-        console.error('Erreur lors de la récupération des données :', error);
-      }
-    },
-
-    // Fonction pour créer un nouvel élément dans Firebase
-    async createNewItem() {
-      if (!this.newItemName) {
-        alert("Veuillez entrer un nom avant de soumettre.");
-        return;
-      }
-
-      try {
-        const newItem = {
-          Name: this.newItemName, // Utilise la valeur de l'input
-        };
-
-        // Envoyer une requête POST pour ajouter un nouvel élément
-        await axios.post('http://localhost:3000/create', newItem);
-        
-        // Recharger les données après avoir créé un nouvel élément
-        this.fetchData();
-
-        // Réinitialiser le champ de l'input
-        this.newItemName = "";
-      } catch (error) {
-        console.error('Erreur lors de la création de l\'élément :', error);
-      }
-    },
-    async deleteItem(id) {
-      try {
-        await axios.delete(`http://localhost:3000/delete/${id}`);
-        this.fetchData(); // Recharge les données après suppression
-      } catch (error) {
-        console.error('Erreur lors de la suppression de l\'élément :', error);
-      }
-    },
-  },
-};
-</script>
-
 <style scoped>
-/* Ajoutez du style ici si nécessaire */
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+}
+
+.dashboard {
+  display: flex;
+  font-family: Arial, sans-serif;
+  height: 100vh;
+  width: 100vw;
+  background: #f4f4f4;
+  margin: 0;
+}
+
+.sidebar {
+  width: 200px;
+  background: white;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 2px 0px 10px rgba(0, 0, 0, 0.1);
+}
+
+.logo {
+  font-size: 1.2em;
+  margin-bottom: 20px;
+}
+
+.nav-links {
+  list-style: none;
+  padding: 0;
+  width: 100%;
+}
+
+.nav-links li {
+  padding: 15px;
+  text-align: left;
+  width: 100%;
+  cursor: pointer;
+  border-radius: 5px;
+  transition: background 0.3s;
+}
+
+.nav-links li:hover {
+  background: #f0f0f0;
+}
+
+.main-content {
+  flex-grow: 1;
+  padding: 20px;
+  margin: 0;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: white;
+  padding: 15px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.add-item {
+  background: blue;
+  color: white;
+  padding: 10px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  border: none;
+}
+
+.widgets {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+.widget {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+  box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.1);
+}
 </style>
