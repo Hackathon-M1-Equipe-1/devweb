@@ -58,7 +58,13 @@ const routes = [
       } else {
         next('/login'); // Sinon, on redirige vers la page de connexion
       }
-    }
+    },
+    component: () => import('./views/ProfilePage.vue') // Remplace par ton composant principal
+  },
+  {
+    path: '/statistique',
+    name: 'Statistique',
+    component: () => import('./views/AnalyticsPage.vue') // Remplace par ton composant principal
   }
 ]
 
