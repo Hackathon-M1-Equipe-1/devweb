@@ -1,8 +1,8 @@
-import { createApp } from 'vue'
-import App from './App.vue'
-import { createRouter, createWebHistory } from 'vue-router'
-import './index.css'
-import './assets/tailwind.css'
+import { createApp } from 'vue';
+import App from './App.vue';
+import { createRouter, createWebHistory } from 'vue-router';
+import './index.css';
+import './assets/tailwind.css';
 
 // Fonction simulée pour vérifier si l'utilisateur est connecté
 // Remplace cette logique par une vraie méthode de vérification d'authentification (par exemple, un token dans le localStorage)
@@ -58,23 +58,22 @@ const routes = [
       } else {
         next('/login'); // Sinon, on redirige vers la page de connexion
       }
-    },
-    component: () => import('./views/ProfilePage.vue') // Remplace par ton composant principal
+    }
   },
   {
     path: '/statistique',
     name: 'Statistique',
-    component: () => import('./views/AnalyticsPage.vue') // Remplace par ton composant principal
+    component: () => import('./views/AnalyticsPage.vue')
   }
-]
+];
 
 // Créer l'instance du router
 const router = createRouter({
   history: createWebHistory(),
   routes // Nous passons ici les routes définies ci-dessus
-})
+});
 
 // Créer l'application Vue et y ajouter le router
-const app = createApp(App)
-app.use(router)
-app.mount('#app')
+const app = createApp(App);
+app.use(router);
+app.mount('#app');
