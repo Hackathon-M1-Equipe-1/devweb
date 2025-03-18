@@ -1,6 +1,7 @@
 const express = require('express');
 const admin = require('firebase-admin');
 const cors = require('cors');
+const bodyParser = require('body-parser');
 
 // Initialiser Express
 const app = express();
@@ -8,6 +9,7 @@ const port = 3000;
 
 // Utiliser CORS pour autoriser les appels depuis votre frontend Vue.js
 app.use(cors());
+app.use(bodyParser.json());
 
 // Parse les requêtes JSON
 app.use(express.json());
@@ -18,6 +20,22 @@ admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
   databaseURL: "https://hackaton-m1-team1-default-rtdb.europe-west1.firebasedatabase.app" // URL de la base de données Firebase
 });
+
+// Middleware pour vérifier le token
+const authenticate = async (req, res, next) => {
+  const token = req.body.token;  // On prend le token depuis le body
+  if (!token) return res.status(403).send("Non autorisé");
+
+  try {
+    const decodedToken = await admin.auth().verifyIdToken(token);
+    req.user = decodedToken;  // Ajouter l'utilisateur authentifié dans la requête
+    next();
+  } catch (error) {
+    console.error("Erreur d'authentification : ", error);
+    res.status(401).send("Token invalide");
+  }
+};
+
 
 // Accéder à Firestore
 const db = admin.firestore();
@@ -213,6 +231,12 @@ app.delete('/delete/:id', async (req, res) => {
 // Route par défaut (racine)
 app.get('/', (req, res) => {
   res.send('Bienvenue sur le serveur Firestore !');
+});
+
+app.post('/login', authenticate, (req, res) => {
+  const user = req.user;  // Utilisateur validé par Firebase
+  console.log("Utilisateur authentifié : ", user);
+  res.status(200).json({ message: "Utilisateur authentifié", user });
 });
 
 // Lancer le serveur sur le port 3000

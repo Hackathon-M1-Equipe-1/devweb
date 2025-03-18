@@ -13,6 +13,16 @@ const routes = [
     component: () => import('./App.vue') // Remplace par ton composant principal
   },
   {
+    path: '/login',
+    name: 'Login',
+    component: () => import('./views/LoginPage.vue') // Remplace par ton composant principal
+  },
+  {
+    path: '/createAccount',
+    name: 'CreateAccount',
+    component: () => import('./views/CreateAccountPage.vue') // Remplace par ton composant principal
+  },
+  {
     path: '/dashboard',
     name: 'Dashboard',
     component: () => import('./views/DashboardPage.vue') // Remplace par ton composant principal
