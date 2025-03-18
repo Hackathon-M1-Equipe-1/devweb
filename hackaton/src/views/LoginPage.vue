@@ -59,23 +59,28 @@ export default {
   methods: {
     // Fonction de connexion
     async login() {
-      try {
-        // Connexion avec Firebase Auth
-        const userCredential = await signInWithEmailAndPassword(auth, this.email, this.password);
-        const idToken = await userCredential.user.getIdToken();
+  try {
+    // Connexion avec Firebase Auth
+    const userCredential = await signInWithEmailAndPassword(auth, this.email, this.password);
+    const idToken = await userCredential.user.getIdToken();
 
-        // Envoyer le token à votre serveur
-        const response = await axios.post("http://localhost:3000/login", {
-          token: idToken,
-        });
+    // Envoyer le token à ton serveur pour l'authentification
+    const response = await axios.post("http://localhost:3000/login", {
+      token: idToken,
+    });
 
-        console.log("Utilisateur connecté :", response.data);
-        this.$router.push("/dashboard"); // Redirection vers la page après connexion réussie
-      } catch (error) {
-        console.error("Erreur de connexion :", error);
-        alert("Identifiants incorrects. Veuillez réessayer.");
-      }
-    },
+    console.log("Utilisateur connecté :", response.data);
+    
+    // Enregistrer l'état d'authentification dans le localStorage
+    localStorage.setItem('authToken', idToken); // Stocke le token ou un indicateur d'authentification
+
+    // Redirection vers la page Dashboard après une connexion réussie
+    this.$router.push("/dashboard");
+  } catch (error) {
+    console.error("Erreur de connexion :", error);
+    alert("Identifiants incorrects. Veuillez réessayer.");
+  }
+},
 
     // Fonction pour la création de compte
     async createAccount() {
