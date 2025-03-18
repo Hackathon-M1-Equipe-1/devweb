@@ -1,122 +1,165 @@
 <template>
-    <div class="profile-container">
-      <div class="profile-header">
-        <h1>Mon Profil</h1>
-        <p class="subtitle">Bienvenue sur votre page de profil</p>
-      </div>
-      
-      <div class="profile-info">
-        <div class="profile-card">
-          <img :src="user.avatar" alt="Avatar" class="avatar" />
-          <div class="profile-details">
-            <h2>{{ user.name }}</h2>
-            <p><strong>Email:</strong> {{ user.email }}</p>
-            <p><strong>Bio:</strong> {{ user.bio }}</p>
-          </div>
+    <div class="flex h-screen">
+      <!-- Sidebar -->
+      <aside class="w-64 bg-white p-8 text-gray-800 flex flex-col items-center shadow-md">
+        <div class="text-2xl font-bold mb-10 flex items-center gap-2">
+          <span>🏠</span> Smart Dashboard
         </div>
-      </div>
+        <nav>
+          <ul class="w-full">
+            <li class="py-3 px-4 rounded-md cursor-pointer hover:bg-gray-100" @click="$router.push('/dashboard')">🏠 Home</li>
+            <li class="py-3 px-4 rounded-md cursor-pointer hover:bg-gray-100" @click="$router.push('/statistique')">📊 Analytics</li>
+            <li class="py-3 px-4 rounded-md cursor-pointer hover:bg-gray-100" @click="$router.push('/profile')">👤 Profile</li>
+            <li class="py-3 px-4 rounded-md cursor-pointer hover:bg-gray-100"><a @click="logout">🚪 Se déconnecter</a></li>
+          </ul>
+        </nav>
+      </aside>
   
-      <div class="edit-section">
-        <button @click="editProfile">Modifier Profil</button>
+      <!-- Main Content -->
+      <div class="flex-grow p-8 overflow-y-auto bg-gradient-to-tr from-blue-100 via-white to-blue-100 h-full w-full">
+        <header class="flex justify-between items-center bg-white p-6 rounded-md shadow-md mb-8">
+          <div class="space-y-1">
+            <h1 class="text-2xl font-bold">Mon Profil</h1>
+            <p class="text-sm text-gray-500">Consultez et modifiez vos informations ici !</p>
+          </div>
+          <button class="bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-md" @click="logout">
+            Se déconnecter
+          </button>
+        </header>
+  
+        <!-- Contenu principal -->
+        <main class="flex-grow max-w-5xl mx-auto w-full p-8">
+          <div class="bg-white rounded-lg shadow-lg p-8">
+            <div class="flex items-center mb-8">
+              <div>
+                <h2 class="text-2xl font-semibold text-gray-800">{{ firstName }} {{ lastName }}</h2>
+                <p class="text-gray-500">Informations personnelles</p>
+              </div>
+            </div>
+  
+            <hr class="mb-6" />
+  
+            <!-- Formulaire -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label for="firstName" class="block text-sm font-medium text-gray-600 mb-1">Nom</label>
+                <input v-model="firstName" id="firstName" type="text" class="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-blue-500" />
+              </div>
+  
+              <div>
+                <label for="lastName" class="block text-sm font-medium text-gray-600 mb-1">Prénom</label>
+                <input v-model="lastName" id="lastName" type="text" class="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-blue-500" />
+              </div>
+  
+              <div>
+                <label for="age" class="block text-sm font-medium text-gray-600 mb-1">Âge</label>
+                <input v-model="age" id="age" type="number" class="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-blue-500" />
+              </div>
+  
+              <div>
+                <label for="address" class="block text-sm font-medium text-gray-600 mb-1">Adresse</label>
+                <input v-model="address" id="address" type="text" class="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-blue-500" />
+              </div>
+  
+              <div>
+                <label for="phone" class="block text-sm font-medium text-gray-600 mb-1">Téléphone</label>
+                <input v-model="phone" id="phone" type="tel" class="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-blue-500" />
+              </div>
+  
+              <div>
+                <label for="newPassword" class="block text-sm font-medium text-gray-600 mb-1">Nouveau mot de passe</label>
+                <input v-model="newPassword" id="newPassword" type="password" class="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-blue-500" />
+              </div>
+            </div>
+  
+            <div class="mt-8 text-right">
+              <button @click="updateProfile" class="px-6 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition duration-300 transform hover:scale-105">
+                Sauvegarder
+              </button>
+            </div>
+          </div>
+        </main>
       </div>
     </div>
   </template>
   
   <script>
+  import { getFirestore, collection, query, where, getDocs, doc, updateDoc } from "firebase/firestore";
+  import { auth, updatePassword } from "@/firebase"; // Assurez-vous que Firebase est bien importé
+  
   export default {
-    name: 'ProfilePage',
     data() {
       return {
-        // Exemple de données utilisateur, tu peux les récupérer d'une API
-        user: {
-          name: 'John Doe',
-          email: 'john.doe@example.com',
-          bio: 'Développeur Full Stack passionné par Vue.js et Node.js.',
-          avatar: 'https://via.placeholder.com/150' // Placeholder pour l'avatar
-        }
+        userEmail: "",
+        firstName: "",
+        lastName: "",
+        age: "",
+        address: "",
+        phone: "",
+        newPassword: "",
       };
     },
+    created() {
+      this.getUserData();
+    },
     methods: {
-      editProfile() {
-        alert('Redirection vers la page de modification du profil');
-        // Ici, tu pourrais rediriger l'utilisateur vers une autre page ou afficher un formulaire de modification
-        this.$router.push('/edit-profile');
-      }
-    }
+      async getUserData() {
+        const db = getFirestore();
+        const user = auth.currentUser;
+        if (user) {
+          this.userEmail = user.email;
+  
+          const usersRef = collection(db, "users");
+          const q = query(usersRef, where("email", "==", this.userEmail));
+  
+          try {
+            const querySnapshot = await getDocs(q);
+            querySnapshot.forEach((doc) => {
+              const userData = doc.data();
+              this.firstName = userData.firstName || "";
+              this.lastName = userData.lastName || "";
+              this.age = userData.age || "";
+              this.address = userData.address || "";
+              this.phone = userData.phone || "";
+            });
+          } catch (error) {
+            console.error("Erreur lors de la récupération des données utilisateur :", error);
+          }
+        }
+      },
+      async logout() {
+        try {
+          await auth.signOut();
+          this.$router.push("/login");
+        } catch (error) {
+          console.error("Erreur de déconnexion :", error);
+          alert("Erreur lors de la déconnexion");
+        }
+      },
+      async updateProfile() {
+        const user = auth.currentUser;
+        if (user) {
+          const db = getFirestore();
+          const userRef = doc(db, "users", user.uid);
+  
+          await updateDoc(userRef, {
+            firstName: this.firstName,
+            lastName: this.lastName,
+            age: this.age,
+            address: this.address,
+            phone: this.phone,
+          });
+  
+          if (this.newPassword) {
+            try {
+              await updatePassword(user, this.newPassword);
+            } catch (error) {
+              console.error("Erreur lors de la mise à jour du mot de passe :", error);
+            }
+          }
+        }
+      },
+    },
   };
   </script>
-  
-  <style scoped>
-  .profile-container {
-    width: 100%;
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 20px;
-    text-align: center;
-  }
-  
-  .profile-header {
-    margin-bottom: 20px;
-  }
-  
-  .profile-header h1 {
-    font-size: 2rem;
-    color: #4CAF50;
-  }
-  
-  .profile-header .subtitle {
-    font-size: 1.2rem;
-    color: #777;
-  }
-  
-  .profile-info {
-    margin-top: 30px;
-  }
-  
-  .profile-card {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    padding: 20px;
-    background-color: #f9f9f9;
-    margin: 20px 0;
-  }
-  
-  .profile-card .avatar {
-    width: 100px;
-    height: 100px;
-    border-radius: 50%;
-    margin-right: 20px;
-  }
-  
-  .profile-details h2 {
-    font-size: 1.5rem;
-    color: #333;
-  }
-  
-  .profile-details p {
-    font-size: 1rem;
-    color: #555;
-  }
-  
-  .edit-section {
-    margin-top: 20px;
-  }
-  
-  .edit-section button {
-    background-color: #4CAF50;
-    color: white;
-    font-size: 1rem;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-  }
-  
-  .edit-section button:hover {
-    background-color: #45a049;
-  }
-  </style>
   
