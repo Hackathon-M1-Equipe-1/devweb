@@ -387,66 +387,89 @@ async function checkRooms() {
     console.error("❌ Erreur lors de la récupération des salles :", error);
   }
 }
-
 // Route pour traiter une commande vocale
 app.post('/voice-command', async (req, res) => {
-  const {transcription} = req.body;
+  const { transcription } = req.body;
   console.log('Transcription reçue :', transcription);
 
   if (!transcription) {
-    return res.status(400).json({error: "La transcription est requise"});
+    return res.status(400).json({ error: "La transcription est requise" });
   }
 
   try {
     console.log(transcription);
 
+    // Classification de l'action (ex: turn_on / turn_off)
     const action = classifier.classify(transcription.toLowerCase());
-    const device = await extractDevice(transcription.toLowerCase());
+    // Extraction du nom de l'appareil (device)
+    const deviceName = await extractDevice(transcription.toLowerCase());
 
-    console.log(device);
-    console.log(action);
+    console.log("Device Name:", deviceName);
+    console.log("Action:", action);
 
-    if (!action || !device) {
-      return res.status(400).json({error: "Commande non reconnue"});
+    if (!action || !deviceName) {
+      return res.status(400).json({ error: "Commande non reconnue" });
     }
 
+    // Déterminer le nouveau statut
     let status;
-    if (action.startsWith("turn_on"))
+    if (action.startsWith("turn_on")) {
       status = "on";
-    else if (action.startsWith("turn_off"))
+    } else if (action.startsWith("turn_off")) {
       status = "off";
-    else
+    } else {
       return res.status(400).send("Action invalide");
-
-    const devicesSnapshot = await db.collection('devices').where('nom', '==', device).get();
-    if (devicesSnapshot.empty) {
-      return res.status(404).json({error: `Aucun appareil nommé "${device}" trouvé`});
     }
+
+    // Chercher l'appareil dans Firestore par son 'nom'
+    const devicesSnapshot = await db
+      .collection('devices')
+      .where('nom', '==', deviceName)
+      .get();
+
+    if (devicesSnapshot.empty) {
+      return res.status(404).json({
+        error: `Aucun appareil nommé "${deviceName}" trouvé`
+      });
+    }
+
+    // On suppose qu'il y a un seul doc qui correspond
+    const deviceDoc = devicesSnapshot.docs[0];
+    const deviceId = deviceDoc.id;  // Récupérer l'ID Firestore
+    const deviceRef = deviceDoc.ref;
 
     // Mettre à jour l'état de l'appareil dans Firestore
-    const deviceRef = devicesSnapshot.docs[0].ref;
-    await deviceRef.update({status: status});
+    await deviceRef.update({ status: status });
 
-    console.log(`Commande exécutée : ${action} sur ${device}`);
-    res.status(200).json({message: `Commande exécutée : ${action} sur ${device}`});
+    // Publier la mise à jour sur MQTT (ex: "devices/<deviceId>")
+    client.publish(`devices/${deviceId}`, JSON.stringify({ status }), (err) => {
+      if (err) {
+        console.error("Erreur lors de la publication MQTT :", err);
+      } else {
+        console.log(`Message MQTT envoyé pour device ${deviceId} avec status ${status}`);
+      }
+    });
+
+    console.log(`Commande exécutée : ${action} sur ${deviceName}`);
+    res.status(200).json({ message: `Commande exécutée : ${action} sur ${deviceName}` });
 
   } catch (error) {
     console.error("Erreur lors du traitement de la commande :", error);
-    res.status(500).json({error: "Erreur serveur"});
+    res.status(500).json({ error: "Erreur serveur" });
   }
 });
 
 async function extractDevice(transcription) {
   const snapshot = await db.collection('devices').get();
-
   if (snapshot.empty) {
     return null;
   }
 
+  // On récupère la liste des noms (en minuscule)
   const devices = snapshot.docs.map(doc => doc.data().nom.toLowerCase());
   for (const device of devices) {
-    if (transcription.toLowerCase().includes(device)) {
-      return device;
+    if (transcription.includes(device)) {
+      return device; // Retourne le nom exact trouvé dans la transcription
     }
   }
 
