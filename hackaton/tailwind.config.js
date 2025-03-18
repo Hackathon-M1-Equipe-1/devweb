@@ -5,7 +5,11 @@ export default {
     "./src/**/*.{vue,js,ts,jsx,tsx}"
   ],
   theme: {
-    extend: {},
+    extend: {
+      colors: {
+        customGray: "#F3F4F4", // Ta couleur personnalisée
+      },
+    },
   },
   plugins: [],
 };

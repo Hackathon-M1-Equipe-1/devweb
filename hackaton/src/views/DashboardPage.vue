@@ -18,15 +18,15 @@
     </aside>
 
     <!-- Main Content -->
-    <div v-if="!showProfile" class="flex-grow p-8 overflow-y-auto"> <!-- Masquer le contenu si showProfile est true -->
+    <div v-if="!showProfile" class="flex-grow p-8 overflow-y-auto bg-gradient-to-tr from-blue-100 via-white to-blue-100 h-full w-full"> <!-- Masquer le contenu si showProfile est true -->
       <!-- Header -->
       <header class="flex justify-between items-center bg-white p-6 rounded-md shadow-md mb-8">
         <div class="space-y-1">
-          <h1 class="text-2xl font-bold">Dashboard Overview</h1>
-          <p v-if="firstName && lastName" class="text-sm text-gray-500">Welcome back, {{ firstName }} {{ lastName }}!</p>
+          <h1 class="text-2xl font-bold">Vue globale du Dashboard</h1>
+          <p v-if="firstName && lastName" class="text-sm text-gray-500">Bon retour, {{ firstName }} {{ lastName }} !</p>
         </div>
         <button class="bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-md" @click="promptAddRoom">
-          + Add Room
+          Ajouter une pièce
         </button>
       </header>
 
