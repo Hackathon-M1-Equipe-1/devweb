@@ -173,6 +173,14 @@
 
     <!-- Overlay pour la room agrandie -->
     <div v-if="enlargedRoomId" @click="enlargedRoomId = null" class="fixed inset-0 bg-black bg-opacity-50 z-40"></div>
+    <transition name="fade">
+      <div
+        v-if="successMessage"
+        class="fixed top-5 right-5 bg-green-500 text-white px-4 py-2 rounded shadow-lg z-50"
+      >
+        {{ successMessage }}
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -191,7 +199,9 @@ export default {
       enlargedRoomId: null,
       userEmail: "",
       firstName: "",
-      lastName: ""
+      lastName: "",
+      successMessage: "", // <-- Ajout de la variable pour la notification
+
     };
   },
   created() {
@@ -433,6 +443,11 @@ export default {
     async deleteRoom(roomId) {
       try {
         await axios.delete(`http://localhost:3000/rooms/${roomId}`);
+        this.successMessage = "Salle supprimée avec succès !";
+        // Efface la notification au bout de 3 secondes
+        setTimeout(() => {
+          this.successMessage = "";
+        }, 3000);
         this.fetchRooms();
       } catch (error) {
         console.error("Erreur lors de la suppression de la salle :", error);
@@ -444,6 +459,12 @@ export default {
       try {
         await axios.delete(`http://localhost:3000/devices/${deviceId}`);
         this.fetchRooms();
+            // Affiche la notification
+        this.successMessage = "Appareil supprimé avec succès !";
+        // Efface la notification au bout de 3 secondes
+        setTimeout(() => {
+          this.successMessage = "";
+        }, 3000);
       } catch (error) {
         console.error("Erreur lors de la suppression de l'appareil :", error);
       }
@@ -468,6 +489,13 @@ export default {
 };
 </script>
 
+
 <style scoped>
-/* Aucun style personnalisé requis, tout est géré par Tailwind */
+/* Animation de fade simple (facultative) */
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 0.5s;
+}
+.fade-enter, .fade-leave-to {
+  opacity: 0;
+}
 </style>
