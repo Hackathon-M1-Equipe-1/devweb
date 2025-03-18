@@ -264,16 +264,14 @@ export default {
       const newStatus = (device.status === "on") ? "off" : "on";
       device.status = newStatus;
       try {
-        // MQTT (ex: /devices/:id/mqtt)
         await axios.post(`http://localhost:3000/devices/${device.id}/mqtt`, {
           status: newStatus
         });
-        // Mise à jour Firestore
         await axios.put(`http://localhost:3000/devices/${device.id}`, {
           status: newStatus
         });
       } catch (error) {
-        console.error("Erreur lors de la mise à jour de la lampe :", error);
+        console.error("Erreur lors de la mise à jour du statut de la lampe", error);
       }
     },
 
@@ -282,218 +280,136 @@ export default {
       const newStatus = (device.status === "locked") ? "unlocked" : "locked";
       device.status = newStatus;
       try {
-        await axios.post(`http://localhost:3000/devices/${device.id}/mqtt`, {
-          status: newStatus
-        });
         await axios.put(`http://localhost:3000/devices/${device.id}`, {
           status: newStatus
         });
       } catch (error) {
-        console.error("Erreur lors de la mise à jour de la porte :", error);
+        console.error("Erreur lors de la mise à jour du statut de la porte", error);
       }
     },
 
-    // ❄️ CLIM
-    async updateAcTemperature(device, newTemp) {
-      device.status = newTemp;
+    // ❄️ CLIMATISATION
+    async updateAcTemperature(device, newTemperature) {
+      device.status = newTemperature;
       try {
-        await axios.post(`http://localhost:3000/devices/${device.id}/mqtt`, {
-          status: newTemp
-        });
         await axios.put(`http://localhost:3000/devices/${device.id}`, {
-          status: newTemp
+          status: newTemperature
         });
       } catch (error) {
-        console.error("Erreur lors de la mise à jour de la clim :", error);
+        console.error("Erreur lors de la mise à jour de la température", error);
       }
     },
 
-    // ➕ Ajouter une salle
-    async promptAddRoom() {
-      const { value: roomName } = await Swal.fire({
-        title: "Ajouter une nouvelle salle",
+    // 👨‍💻 Ajouter une nouvelle pièce
+    promptAddRoom() {
+      Swal.fire({
+        title: "Ajouter une pièce",
         input: "text",
-        inputPlaceholder: "Nom de la salle",
-        showCancelButton: true,
-        confirmButtonText: "Ajouter",
-        preConfirm: (value) => {
-          if (!value) {
-            Swal.showValidationMessage("Le nom de la salle est requis");
-          }
-          return value;
+        inputPlaceholder: "Nom de la pièce",
+        showCancelButton: true
+      }).then((result) => {
+        if (result.isConfirmed && result.value) {
+          this.addRoom(result.value);
         }
       });
-      if (roomName) {
-        this.addRoom(roomName);
-      }
     },
-    async addRoom(roomName) {
+
+    // 🚪 Ajouter une room
+    async addRoom(name) {
       try {
-        const newRoom = {
-          nom: roomName,
-          appareil: [],
-          idUser: this.userEmail
-        };
-        await axios.post("http://localhost:3000/rooms", newRoom);
-        this.fetchRooms();
+        const response = await axios.post("http://localhost:3000/rooms", { nom: name });
+        this.rooms.push(response.data);
+        this.successMessage = "Pièce ajoutée avec succès !"; // <-- Affichage notification
+        setTimeout(() => this.successMessage = "", 3000); // Notification disparaît après 3 sec
       } catch (error) {
-        console.error("Erreur lors de l'ajout de la salle :", error);
+        console.error("Erreur lors de l'ajout de la pièce", error);
       }
     },
 
-    // ➕ Ajouter un device
-    async promptAddDevice(roomId) {
-      // 1) Nom du device
-      const { value: deviceName } = await Swal.fire({
-        title: "Ajouter un nouvel appareil",
+    // 🗑️ Supprimer une pièce
+    async deleteRoom(roomId) {
+      const confirmation = confirm("Êtes-vous sûr de vouloir supprimer cette pièce ?");
+      if (confirmation) {
+        try {
+          await axios.delete(`http://localhost:3000/rooms/${roomId}`);
+          this.rooms = this.rooms.filter((room) => room.id !== roomId);
+          this.successMessage = "Pièce supprimée avec succès !"; // <-- Affichage notification
+          setTimeout(() => this.successMessage = "", 3000); // Notification disparaît après 3 sec
+        } catch (error) {
+          console.error("Erreur lors de la suppression de la pièce", error);
+        }
+      }
+    },
+
+    // ➕ Ajouter un appareil à une pièce
+    promptAddDevice(roomId) {
+      Swal.fire({
+        title: "Ajouter un appareil",
         input: "text",
         inputPlaceholder: "Nom de l'appareil",
-        showCancelButton: true,
-        confirmButtonText: "Suivant",
-        preConfirm: (value) => {
-          if (!value) {
-            Swal.showValidationMessage("Le nom de l'appareil est requis");
-          }
-          return value;
+        showCancelButton: true
+      }).then((result) => {
+        if (result.isConfirmed && result.value) {
+          this.addDevice(roomId, result.value);
         }
       });
-      if (!deviceName) return;
-
-      // 2) Type de device
-      const { value: deviceType } = await Swal.fire({
-        title: "Choisir le type d'appareil",
-        input: "select",
-        inputOptions: {
-          lamp: "Lampe 💡",
-          door: "Porte 🚪",
-          ac: "Clim ❄️"
-        },
-        inputPlaceholder: "-- Sélectionnez un type --",
-        showCancelButton: true,
-        confirmButtonText: "Suivant"
-      });
-      if (!deviceType) return;
-
-      // 3) Statut selon le type
-      let deviceStatus = "";
-      if (deviceType === "lamp") {
-        const { value: status } = await Swal.fire({
-          title: "Choisir l'état de la lampe",
-          input: "select",
-          inputOptions: {
-            on: "Allumée (on)",
-            off: "Éteinte (off)"
-          },
-          showCancelButton: true,
-          confirmButtonText: "Ajouter"
-        });
-        if (!status) return;
-        deviceStatus = status;
-      } else if (deviceType === "door") {
-        const { value: status } = await Swal.fire({
-          title: "Choisir l'état de la porte",
-          input: "select",
-          inputOptions: {
-            locked: "Verrouillée (locked)",
-            unlocked: "Déverrouillée (unlocked)"
-          },
-          showCancelButton: true,
-          confirmButtonText: "Ajouter"
-        });
-        if (!status) return;
-        deviceStatus = status;
-      } else if (deviceType === "ac") {
-        const { value: status } = await Swal.fire({
-          title: "Régler la température de la clim",
-          input: "number",
-          inputPlaceholder: "Ex: 22",
-          showCancelButton: true,
-          confirmButtonText: "Ajouter",
-          preConfirm: (value) => {
-            if (!value) {
-              Swal.showValidationMessage("La température est requise");
-            }
-            return value;
-          }
-        });
-        if (!status) return;
-        deviceStatus = status;
-      }
-
-      // 4) Appel final pour ajouter l'appareil
-      this.addDevice(roomId, deviceName, deviceType, deviceStatus);
     },
 
-    async addDevice(roomId, nom, type, status) {
+    // 🛠 Ajouter un appareil
+    async addDevice(roomId, deviceName) {
       try {
-        const newDevice = {
-          nom,
-          type,
-          status,
-          roomId
-        };
-        await axios.post("http://localhost:3000/devices", newDevice);
-        this.fetchRooms();
+        const newDevice = await axios.post("http://localhost:3000/devices", {
+          nom: deviceName,
+          roomId: roomId,
+        });
+        const room = this.rooms.find((room) => room.id === roomId);
+        if (room) {
+          room.devices.push(newDevice.data);
+          this.successMessage = "Appareil ajouté avec succès !"; // <-- Affichage notification
+          setTimeout(() => this.successMessage = "", 3000); // Notification disparaît après 3 sec
+        }
       } catch (error) {
-        console.error("Erreur lors de l'ajout de l'appareil :", error);
+        console.error("Erreur lors de l'ajout de l'appareil", error);
       }
     },
 
-    // 🗑️ Supprimer une salle
-    async deleteRoom(roomId) {
-      try {
-        await axios.delete(`http://localhost:3000/rooms/${roomId}`);
-          // Affiche la notification
-        this.successMessage = "Salle supprimée avec succès !";
-        // Efface la notification au bout de 3 secondes
-        setTimeout(() => {
-          this.successMessage = "";
-        }, 3000);
-        this.fetchRooms();
-      } catch (error) {
-        console.error("Erreur lors de la suppression de la salle :", error);
-      }
-    },
-
-    // 🗑️ Supprimer un device
+    // 🗑️ Supprimer un appareil
     async deleteDevice(deviceId) {
-      try {
-        await axios.delete(`http://localhost:3000/devices/${deviceId}`);
-        // Affiche la notification
-        this.successMessage = "Appareil supprimé avec succès !";
-        // Efface la notification au bout de 3 secondes
-        setTimeout(() => {
-          this.successMessage = "";
-        }, 3000);
-        this.fetchRooms();
-      } catch (error) {
-        console.error("Erreur lors de la suppression de l'appareil :", error);
+      const confirmation = confirm("Êtes-vous sûr de vouloir supprimer cet appareil ?");
+      if (confirmation) {
+        try {
+          await axios.delete(`http://localhost:3000/devices/${deviceId}`);
+          this.rooms.forEach((room) => {
+            room.devices = room.devices.filter((device) => device.id !== deviceId);
+          });
+          this.successMessage = "Appareil supprimé avec succès !"; // <-- Affichage notification
+          setTimeout(() => this.successMessage = "", 3000); // Notification disparaît après 3 sec
+        } catch (error) {
+          console.error("Erreur lors de la suppression de l'appareil", error);
+        }
       }
     },
 
-    // 📈 Agrandir / Réduire la room
+    // Agrandir ou réduire la pièce (en cliquant sur l'icône 👁️)
     toggleEnlargeRoom(roomId) {
-      this.enlargedRoomId = (this.enlargedRoomId === roomId) ? null : roomId;
+      this.enlargedRoomId = this.enlargedRoomId === roomId ? null : roomId;
     },
 
-    // 🔒 Déconnexion
-    async logout() {
-      try {
-        await auth.signOut();
+    // 🚪 Se déconnecter
+    logout() {
+      auth.signOut().then(() => {
         this.$router.push("/login");
-      } catch (error) {
-        console.error("Erreur de déconnexion :", error);
-        alert("Erreur lors de la déconnexion");
-      }
+      }).catch((error) => {
+        console.error("Erreur de déconnexion", error);
+      });
     }
   }
 };
 </script>
 
 <style scoped>
-/* Animation de fade simple (facultative) */
 .fade-enter-active, .fade-leave-active {
-  transition: opacity 0.5s;
+  transition: opacity 0.3s ease;
 }
 .fade-enter, .fade-leave-to {
   opacity: 0;

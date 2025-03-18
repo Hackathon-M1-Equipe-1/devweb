@@ -250,14 +250,21 @@
       // Exemple de génération de données aléatoires pour un line chart
       
   
-      logout() {
-        // Ex. signOut firebase
-        auth.signOut().then(() => {
-          this.$router.push("/login");
-        }).catch((err) => {
-          console.error("Erreur déconnexion :", err);
-        });
+      async logout() {
+      try {
+        // Se déconnecter de Firebase
+        await auth.signOut();  // Utilisation de auth venant de Firebase
+        
+        // Supprimer le token du localStorage pour mettre à jour l'état d'authentification
+        localStorage.removeItem('authToken'); // Supprime le token d'authentification
+      
+        // Redirige l'utilisateur vers la page de connexion
+        this.$router.push("/login");
+      } catch (error) {
+        console.error("Erreur de déconnexion :", error);
+        alert("Erreur lors de la déconnexion");
       }
+    }
     }
   };
   </script>
