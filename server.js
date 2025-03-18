@@ -142,6 +142,33 @@ app.get('/devices/:id', async (req, res) => {
   }
 });
 
+// (Mise à jour du statut d'un appareil dans Firestore)
+app.put('/devices/:id', async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+
+  try {
+    const deviceRef = db.collection("devices").doc(id);
+    const deviceDoc = await deviceRef.get();
+
+    if (!deviceDoc.exists) {
+      return res.status(404).json({ error: "Appareil non trouvé" });
+    }
+
+    // Mise à jour du statut dans Firestore
+    await deviceRef.update({
+      status: status,
+      lastUpdated: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+    res.status(200).json({ message: `Statut mis à jour en '${status}' pour l'appareil ${id}` });
+  } catch (error) {
+    console.error("❌ Erreur lors de la mise à jour du statut :", error);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
+
 // (C) Supprimer un appareil et le retirer de la salle associée
 app.delete('/devices/:id', async (req, res) => {
   try {

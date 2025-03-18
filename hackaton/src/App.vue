@@ -88,10 +88,10 @@
                   <!-- Bouton pour basculer l'état on/off -->
                   <button
                   @click.stop="toggleDevice(device)"
-                  class="bg-blue-500 text-white px-2 py-1 rounded-md ml-2 flex items-center gap-1"
+                  class="pl-2"
                 >
-                  <span v-if="device.status === 'on'">🔴 Turn OFF</span>
-                  <span v-else>🟢 Turn ON</span>
+                  <span v-if="device.status === 'on'">🔴</span>
+                  <span v-else>🟢</span>
                 </button>
                 </div>
               </div>
@@ -146,16 +146,25 @@ export default {
       }
     },
     async toggleDevice(device) {
-      // Si 'on', on passe à 'off'. Sinon 'on'.
+      // Déterminer le nouvel état de l'appareil
       const newStatus = device.status === 'on' ? 'off' : 'on';
-
-      // On appelle la route /devices/:id/mqtt pour envoyer la commande
-      await axios.post(`http://localhost:3000/devices/${device.id}/mqtt`, {
-        status: newStatus
-      });
-
-      // Optionnel : mettre à jour localement pour un rendu instantané
       device.status = newStatus;
+      try {
+        // Envoyer la commande MQTT via l'API backend
+        await axios.post(`http://localhost:3000/devices/${device.id}/mqtt`, {
+          status: newStatus
+        });
+
+        // Mettre à jour le statut dans Firestore via l'API backend
+        await axios.put(`http://localhost:3000/devices/${device.id}`, {
+          status: newStatus
+        });
+
+        // Mise à jour locale immédiate pour un rendu plus rapide
+        
+      } catch (error) {
+        console.error("❌ Erreur lors de la mise à jour du statut de l'appareil :", error);
+      }
     },
     async promptAddRoom() {
       const { value: roomName } = await Swal.fire({
