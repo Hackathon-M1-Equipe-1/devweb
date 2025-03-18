@@ -10,7 +10,7 @@
           <li class="py-3 px-4 rounded-md cursor-pointer hover:bg-gray-100" @click="$router.push('/dashboard')">
             🏠 Home
           </li>
-          <li class="py-3 px-4 rounded-md cursor-pointer hover:bg-gray-100">📊 Analytics</li>
+          <li class="py-3 px-4 rounded-md cursor-pointer hover:bg-gray-100" @click="$router.push('/statistique')">📊 Analytics</li>
           <li class="py-3 px-4 rounded-md cursor-pointer hover:bg-gray-100" @click="$router.push('/profile')">
             👤 Profile
           </li>
@@ -138,16 +138,17 @@
                         type="number"
                         class="w-16 border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                         :value="device.status"
+                        @click.stop
                         @input="updateAcTemperature(device, $event.target.value)"
                       />
                       <button
-                        @click="updateAcTemperature(device, parseInt(device.status) + 1)"
+                        @click.stop="updateAcTemperature(device, parseInt(device.status) + 1)"
                         class="bg-gray-200 px-2 py-1 rounded"
                       >
                         +
                       </button>
                       <button
-                        @click="updateAcTemperature(device, parseInt(device.status) - 1)"
+                        @click.stop="updateAcTemperature(device, parseInt(device.status) - 1)"
                         class="bg-gray-200 px-2 py-1 rounded"
                       >
                         -
