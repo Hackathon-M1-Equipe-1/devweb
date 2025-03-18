@@ -329,6 +329,17 @@ app.post('/login', authenticate, (req, res) => {
   res.status(200).json({ message: "Utilisateur authentifié", user });
 });
 
+app.post('/users', async (req, res) => {
+  try {
+    const userData = req.body;
+    await db.collection('users').doc(userData.uid).set(userData);  // Enregistre l'utilisateur dans Firestore
+    res.status(200).send('Utilisateur créé avec succès');
+  } catch (error) {
+    console.error("Erreur lors de l'ajout de l'utilisateur:", error);
+    res.status(500).send('Erreur lors de la création de l\'utilisateur');
+  }
+});
+
 // Lancer le serveur sur le port 3000
 app.listen(port, () => {
   console.log(`🚀 Serveur en écoute sur http://localhost:${port}`);
