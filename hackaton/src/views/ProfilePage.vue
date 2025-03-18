@@ -8,7 +8,7 @@
         <nav>
           <ul class="w-full">
             <li class="py-3 px-4 rounded-md cursor-pointer hover:bg-gray-100" @click="$router.push('/dashboard')">🏠 Home</li>
-            <li class="py-3 px-4 rounded-md cursor-pointer hover:bg-gray-100">📊 Analytics</li>
+            <li class="py-3 px-4 rounded-md cursor-pointer hover:bg-gray-100" @click="$router.push('/statistique')">📊 Analytics</li>
             <li class="py-3 px-4 rounded-md cursor-pointer hover:bg-gray-100" @click="$router.push('/profile')">👤 Profile</li>
             <li class="py-3 px-4 rounded-md cursor-pointer hover:bg-gray-100"><a @click="logout">🚪 Se déconnecter</a></li>
           </ul>

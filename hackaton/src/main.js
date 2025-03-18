@@ -31,6 +31,11 @@ const routes = [
     path: '/profile',
     name: 'Profile',
     component: () => import('./views/ProfilePage.vue') // Remplace par ton composant principal
+  },
+  {
+    path: '/statistique',
+    name: 'Statistique',
+    component: () => import('./views/AnalyticsPage.vue') // Remplace par ton composant principal
   }
 ]
 
