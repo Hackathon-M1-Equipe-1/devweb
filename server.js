@@ -232,6 +232,23 @@ app.delete('/delete/:id', async (req, res) => {
     }
 });
 
+// Route pour mettre à jour un élément de la collection "test"
+app.put('/update/:id', async (req, res) => {
+  const { id } = req.params; // L'ID du document à mettre à jour
+  const updatedData = req.body; // Les nouvelles données pour mettre à jour le document
+
+  try {
+    // Mettre à jour le document spécifié par l'ID avec les nouvelles données
+    await db.collection('test').doc(id).update(updatedData);
+
+    res.status(200).send('Élément mis à jour avec succès');
+  } catch (error) {
+    console.error('Erreur lors de la mise à jour de l\'élément :', error);
+    res.status(500).send('Erreur serveur');
+  }
+});
+
+
 // Route par défaut (racine)
 app.get('/', (req, res) => {
     res.send('Bienvenue sur le serveur Firestore !');
