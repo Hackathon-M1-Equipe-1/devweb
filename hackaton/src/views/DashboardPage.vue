@@ -7,9 +7,9 @@
       </div>
       <nav>
         <ul class="w-full">
-          <li class="py-3 px-4 rounded-md cursor-pointer hover:bg-gray-100" @click="toggleHome">🏠 Home</li>
+          <li class="py-3 px-4 rounded-md cursor-pointer hover:bg-gray-100" @click="$router.push('/dashboard')">🏠 Home</li>
           <li class="py-3 px-4 rounded-md cursor-pointer hover:bg-gray-100">📊 Analytics</li>
-          <li class="py-3 px-4 rounded-md cursor-pointer hover:bg-gray-100" @click="toggleProfile">👤 Profile</li>
+          <li class="py-3 px-4 rounded-md cursor-pointer hover:bg-gray-100" @click="$router.push('/profile')">👤 Profile</li>
           <li class="py-3 px-4 rounded-md cursor-pointer hover:bg-gray-100">
             <a @click="logout">🚪 Se déconnecter</a>
           </li>
@@ -18,7 +18,7 @@
     </aside>
 
     <!-- Main Content -->
-    <div v-if="!showProfile" class="flex-grow p-8 overflow-y-auto bg-gradient-to-tr from-blue-100 via-white to-blue-100 h-full w-full"> <!-- Masquer le contenu si showProfile est true -->
+    <div class="flex-grow p-8 overflow-y-auto bg-gradient-to-tr from-blue-100 via-white to-blue-100 h-full w-full">
       <!-- Header -->
       <header class="flex justify-between items-center bg-white p-6 rounded-md shadow-md mb-8">
         <div class="space-y-1">
@@ -103,9 +103,6 @@
       </section>
     </div>
 
-    <!-- Profile Section -->
-    <Profile v-if="showProfile" /> <!-- Affichage du composant Profile uniquement quand showProfile est true -->
-
     <!-- Modal Overlay for Enlarged Room -->
     <div v-if="enlargedRoomId" @click="enlargedRoomId = null" class="fixed inset-0 bg-black bg-opacity-50 z-40"></div>
 
@@ -119,13 +116,8 @@ import axios from 'axios';
 import Swal from 'sweetalert2';
 import { getFirestore, collection, query, where, getDocs } from "firebase/firestore";
 import { auth } from "@/firebase";  // Assurez-vous que Firebase est bien initialisé
-import Profile from "@/components/ProfileComponent.vue";  // Assure-toi de bien avoir importé le composant
-
 
 export default {
-  components: {
-    Profile
-  },
   data() {
     return {
       rooms: [],
@@ -133,7 +125,6 @@ export default {
       userEmail: "",
       firstName: "",
       lastName: "",
-      showProfile: false, 
     };
   },
   created() {
@@ -149,43 +140,29 @@ export default {
     await this.fetchRooms();
   },
   methods: {
-    toggleProfile() {
-      if (this.showProfile) {
-        return; // Si showProfile est déjà vrai, on ne fait rien
-      }
-      this.showProfile = !this.showProfile;  // Toggle l'affichage du profil
-    },
-    toggleHome() {
-      if (!this.showProfile) {
-        return; // Si showProfile est déjà vrai, on ne fait rien
-      }
-      this.showProfile = !this.showProfile;  // Toggle l'affichage du profil
-    },
-    
     async getUserData() {
-  const db = getFirestore(); // Initialisation de Firestore
-  const user = auth.currentUser; // Récupère l'utilisateur connecté
-  if (user) {
-    this.userEmail = user.email; // Si un utilisateur est connecté, récupère son email
-    
-    // Crée une requête pour rechercher un utilisateur par son email dans la collection 'users'
-    const usersRef = collection(db, "users");
-    const q = query(usersRef, where("email", "==", this.userEmail));
+      const db = getFirestore(); // Initialisation de Firestore
+      const user = auth.currentUser; // Récupère l'utilisateur connecté
+      if (user) {
+        this.userEmail = user.email; // Si un utilisateur est connecté, récupère son email
 
-    try {
-      const querySnapshot = await getDocs(q); // Exécute la requête
-      querySnapshot.forEach((doc) => {
-        // Récupère les données du premier utilisateur trouvé
-        const userData = doc.data();
-        this.firstName = userData.firstName;
-        this.lastName = userData.lastName;
-      });
-    } catch (error) {
-      console.error("Erreur lors de la récupération des données utilisateur : ", error);
-    }
-  }
-},
-
+        // Crée une requête pour rechercher un utilisateur par son email dans la collection 'users'
+        const usersRef = collection(db, "users");
+        const q = query(usersRef, where("email", "==", this.userEmail))   ;
+      
+        try {
+          const querySnapshot = await getDocs(q); // Exécute la requête
+          querySnapshot.forEach((doc) => {
+            // Récupère les données du premier utilisateur trouvé
+            const userData = doc.data();
+            this.firstName = userData.firstName;
+            this.lastName = userData.lastName;
+          });
+        } catch (error) {
+          console.error("Erreur lors de la récupération des données utilisateur : ", error);
+        }
+      }
+    },
     async fetchRooms() {
       try {
         const response = await axios.get("http://localhost:3000/rooms");
@@ -323,17 +300,6 @@ export default {
       } else {
         this.enlargedRoomId = roomId;
       }
-    }
-  },
-  watch: {
-    // Observer le changement de `firstName` et `lastName` pour forcer la mise à jour de l'affichage
-    firstName(newValue, oldValue) {
-      console.log('First Name updated:', newValue);
-      console.log(oldValue);
-    },
-    lastName(newValue, oldValue) {
-      console.log('Last Name updated:', newValue);
-      console.log(oldValue);
     }
   }
 };
