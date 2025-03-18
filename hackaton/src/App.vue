@@ -73,12 +73,26 @@
                 <div class="bg-gray-50 p-3 rounded-lg shadow hover:scale-105 transition-transform h-full">
                   <h4 class="text-lg font-medium mb-1 truncate">{{ device.nom }}</h4>
                   <p class="text-sm text-gray-600 truncate">🛠️ {{ device.type }}</p>
-                  <p class="text-sm font-semibold" :class="device.status === 'on' ? 'text-green-500' : 'text-red-500'">
+                  <p
+                    class="text-sm font-semibold"
+                    :class="device.status === 'on' ? 'text-green-500' : 'text-red-500'"
+                  >
                     🔌 Status: {{ device.status }}
                   </p>
+
+                  <!-- Bouton pour supprimer l'appareil -->
                   <button @click.stop="deleteDevice(device.id)" class="text-red-500 hover:text-red-700 mt-2">
                     🗑️
                   </button>
+
+                  <!-- Bouton pour basculer l'état on/off -->
+                  <button
+                  @click.stop="toggleDevice(device)"
+                  class="bg-blue-500 text-white px-2 py-1 rounded-md ml-2 flex items-center gap-1"
+                >
+                  <span v-if="device.status === 'on'">🔴 Turn OFF</span>
+                  <span v-else>🟢 Turn ON</span>
+                </button>
                 </div>
               </div>
             </div>
@@ -130,6 +144,18 @@ export default {
       } catch (error) {
         console.error("Erreur lors de la récupération des salles et appareils :", error);
       }
+    },
+    async toggleDevice(device) {
+      // Si 'on', on passe à 'off'. Sinon 'on'.
+      const newStatus = device.status === 'on' ? 'off' : 'on';
+
+      // On appelle la route /devices/:id/mqtt pour envoyer la commande
+      await axios.post(`http://localhost:3000/devices/${device.id}/mqtt`, {
+        status: newStatus
+      });
+
+      // Optionnel : mettre à jour localement pour un rendu instantané
+      device.status = newStatus;
     },
     async promptAddRoom() {
       const { value: roomName } = await Swal.fire({
